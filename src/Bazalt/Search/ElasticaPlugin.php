@@ -10,7 +10,7 @@
  * @version    $Revision: 133 $
  */
 
-namespace Bazalt\Seaerch;
+namespace Bazalt\Search;
 
 use Bazalt\ORM as ORM;
 
@@ -41,7 +41,6 @@ class ElasticaPlugin extends ORM\Plugin\AbstractPlugin
         ORM\BaseRecord::registerEvent($model->getModelName(), ORM\BaseRecord::ON_RECORD_SAVE, array($this,'onSave'));
     }
 
-
     /**
      *
      *
@@ -50,7 +49,7 @@ class ElasticaPlugin extends ORM\Plugin\AbstractPlugin
      *
      * @return void
      */
-    public function onSave(Record $record, &$return)
+    public function onSave(ORM\Record $record, &$return)
     {
         $options = $this->getOptions();
         if (!array_key_exists($record->getModelName(), $options)) {
@@ -63,20 +62,14 @@ class ElasticaPlugin extends ORM\Plugin\AbstractPlugin
         ));
 
         $index = $elasticaClient->getIndex('news.mistinfo.com');
-        $type = $index->getType('news');
-        $newsDoc = new \Elastica\Document($record->id, $record->toArray());
-
-        if($record->isPKEmpty()) {
-            $type->createDocument($newsDoc);
-        } else {
+        $type = $index->getType('news2');
+        $newsDoc = $type->createDocument($record->id, $record->toArray());
+        try {
+            $type->getDocument($record->id);
             $type->updateDocument($newsDoc);
+        } catch (\Elastica\Exception\NotFoundException $e) {
+            $type->addDocument($newsDoc);
         }
         $index->refresh();
-//        if(array_key_exists('created', $options) && $record->isPKEmpty()) {
-//            $record->{$options['created']} = gmdate('Y-m-d H:i:s');
-//        }
-//        if(array_key_exists('updated', $options)) {
-//            $record->{$options['updated']} = gmdate('Y-m-d H:i:s');
-//        }
     }
 }
