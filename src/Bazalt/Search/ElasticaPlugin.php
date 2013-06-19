@@ -28,6 +28,12 @@ use Bazalt\ORM as ORM;
  */
 class ElasticaPlugin extends ORM\Plugin\AbstractPlugin
 {
+
+    /**
+     * @var \Elastica\Client Elastic search client
+     */
+    private static $_client = null;
+
     /**
      * Ініціалізує плагін
      * 
@@ -57,12 +63,8 @@ class ElasticaPlugin extends ORM\Plugin\AbstractPlugin
         }
         $options = $options[$record->getModelName()];
 
-        $elasticaClient = new \Elastica\Client(array(
-            'url' => 'http://experiments.equalteam.net:9200/',
-        ));
-
-        $index = $elasticaClient->getIndex('news.mistinfo.com');
-        $type = $index->getType('news2');
+        $index = self::$_client->getIndex($options['index']);
+        $type = $index->getType($options['type']);
         $newsDoc = $type->createDocument($record->id, $record->toArray());
         try {
             $type->getDocument($record->id);
@@ -71,5 +73,15 @@ class ElasticaPlugin extends ORM\Plugin\AbstractPlugin
             $type->addDocument($newsDoc);
         }
         $index->refresh();
+    }
+
+    /**
+     * Set static client for all plugin instances
+     *
+     * @param \Elastica\Client $client
+     */
+    public static function setClient(\Elastica\Client $client)
+    {
+        self::$_client = $client;
     }
 }
