@@ -32,7 +32,12 @@ class ElasticaPlugin extends ORM\Plugin\AbstractPlugin
     /**
      * @var \Elastica\Client Elastic search client
      */
-    private static $_client = null;
+    protected  static $_client = null;
+
+    /**
+     * @var string Default index name
+     */
+    protected  static $_defaultIndex = null;
 
     /**
      * Ініціалізує плагін
@@ -45,6 +50,12 @@ class ElasticaPlugin extends ORM\Plugin\AbstractPlugin
     public function init(ORM\Record $model, $options)
     {
         ORM\BaseRecord::registerEvent($model->getModelName(), ORM\BaseRecord::ON_RECORD_SAVE, array($this,'onSave'));
+        if(!self::$_client) {
+            throw new \Exception('No elastic client found');
+        }
+        if(!self::$_defaultIndex) {
+            throw new \Exception('Empty default index set');
+        }
     }
 
     /**
@@ -63,7 +74,7 @@ class ElasticaPlugin extends ORM\Plugin\AbstractPlugin
         }
         $options = $options[$record->getModelName()];
 
-        $index = self::$_client->getIndex($options['index']);
+        $index = self::$_client->getIndex(isset($options['index']) ? $options['index'] : self::$_defaultIndex);
         $type = $index->getType($options['type']);
         $newsDoc = $type->createDocument($record->id, $record->toArray());
         try {
@@ -83,5 +94,15 @@ class ElasticaPlugin extends ORM\Plugin\AbstractPlugin
     public static function setClient(\Elastica\Client $client)
     {
         self::$_client = $client;
+    }
+
+    /**
+     * Set static client for all plugin instances
+     *
+     * @param string $index Index name
+     */
+    public static function setDefaultIndex($index)
+    {
+        self::$_defaultIndex = $index;
     }
 }
