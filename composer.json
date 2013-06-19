@@ -1,22 +1,23 @@
 {
-    "name": "bazalt/notification",
+    "name": "bazalt/search",
     "license": "New BSD License",
     "authors": [
         {
-            "name": "Vitalii Savchuk",
-            "email": "esvit666@gmail.com"
+            "name": "Alex Slubsky",
+            "email": "aslubsky@gmail.com"
         }
     ],
     "autoload": {
         "psr-0": {
-            "Bazalt\\Notification": "src/"
+            "Bazalt\\Search": "src/"
         }
     },
     "require": {
         "php": ">=5.4.0",
         "analog/analog": "dev-master",
         "bazalt/orm": "dev-master",
-        "symfony/event-dispatcher": "*"
+        "symfony/event-dispatcher": "*",
+        "ruflin/Elastica": "*"
     },
     "require-dev": {
         "satooshi/php-coveralls": "dev-master"
