@@ -49,7 +49,8 @@ class ElasticaPlugin extends ORM\Plugin\AbstractPlugin
      */
     public function init(ORM\Record $model, $options)
     {
-        ORM\BaseRecord::registerEvent($model->getModelName(), ORM\BaseRecord::ON_RECORD_SAVE, array($this,'onSave'));
+        ORM\BaseRecord::registerEvent($model->getModelName(), ORM\BaseRecord::ON_AFTER_RECORD_SAVE, array($this,'onSaved'));
+        ORM\BaseRecord::registerEvent($model->getModelName(), ORM\BaseRecord::ON_RECORD_DELETE, array($this,'onDelete'));
         if(!self::$_client) {
             throw new \Exception('No elastic client found');
         }
@@ -61,12 +62,12 @@ class ElasticaPlugin extends ORM\Plugin\AbstractPlugin
     /**
      *
      *
-     * @param Record $record  Поточний запис
+     * @param Record $record  Current record
      * @param bool       &$return Флаг, який зупиняє подальше виконання save()
      *
      * @return void
      */
-    public function onSave(ORM\Record $record, &$return)
+    public function onSaved(ORM\Record $record, &$return)
     {
         $options = $this->getOptions();
         if (!array_key_exists($record->getModelName(), $options)) {
@@ -83,6 +84,27 @@ class ElasticaPlugin extends ORM\Plugin\AbstractPlugin
         } catch (\Elastica\Exception\NotFoundException $e) {
             $type->addDocument($newsDoc);
         }
+        $index->refresh();
+    }
+
+    /**
+     *
+     *
+     * @param Record $record  Current record
+     *
+     * @return void
+     */
+    public function onDelete(ORM\Record $record)
+    {
+        $options = $this->getOptions();
+        if (!array_key_exists($record->getModelName(), $options)) {
+            return;
+        }
+        $options = $options[$record->getModelName()];
+
+        $index = self::$_client->getIndex(isset($options['index']) ? $options['index'] : self::$_defaultIndex);
+        $type = $index->getType($options['type']);
+        $type->deleteById($record->id);
         $index->refresh();
     }
 
