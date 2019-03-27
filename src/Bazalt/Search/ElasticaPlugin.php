@@ -77,7 +77,7 @@ class ElasticaPlugin extends ORM\Plugin\AbstractPlugin
 
         $index = self::$_client->getIndex(isset($options['index']) ? $options['index'] : self::$_defaultIndex);
         $type = $index->getType($options['type']);
-        $newsDoc = $type->createDocument($record->id, $record->toArray());
+        $newsDoc = $type->createDocument($record->id, $record->toIndex());
         try {
             $type->getDocument($record->id);
             $type->updateDocument($newsDoc);
